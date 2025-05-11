@@ -9,7 +9,6 @@ class Map:
         self.load_map()
 
     def get_map_path(self):
-        """Zwraca ścieżkę do mapy w wersji developerskiej i skompilowanej"""
         base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         return os.path.join(base_path, "assets", "map.txt")
 

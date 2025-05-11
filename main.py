@@ -9,7 +9,7 @@ from settings import *
 def run_game(screen):
     """Główna pętla gry"""
     game_map = Map()
-    player = Player()
+    player = Player(game_map.walls)  # Przekazujemy ściany do konstruktora
     target = Target(game_map.walls)
     ui = UI()
     
@@ -21,19 +21,16 @@ def run_game(screen):
                 pygame.quit()
                 return
             
-            # Obsługa zdarzeń
             if event.type == pygame.KEYDOWN:
                 player.handle_event(event)
         
         player.update_position()
         
-        # Kolizja z celem
         if player.rect.colliderect(target.rect):
             target = Target(game_map.walls)
             ui.update_score(1)
         
-        # Renderowanie
-        screen.fill((30, 30, 40))
+        screen.fill(BG_COLOR)
         game_map.draw(screen)
         target.draw(screen)
         player.draw(screen)
