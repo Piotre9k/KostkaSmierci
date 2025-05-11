@@ -6,10 +6,10 @@ from game.target import Target
 from game.ui import UI
 from settings import *
 
-def run_game(screen):  # Dodajemy screen jako argument
-    """Główna pętla gry (zgodna z Twoją implementacją)"""
+def run_game(screen):
+    """Główna pętla gry (dostosowana do Twojej implementacji)"""
     game_map = Map()
-    player = Player()  # Teraz bez przekazywania game_map
+    player = Player()
     target = Target(game_map.walls)
     ui = UI()
     
@@ -23,7 +23,7 @@ def run_game(screen):  # Dodajemy screen jako argument
             
             player.handle_event(event)
         
-        player.update()
+        player.update_position()  # Zmiana nazwy metody!
         
         if player.rect.colliderect(target.rect):
             target = Target(game_map.walls)
@@ -45,7 +45,7 @@ def main():
     
     menu = MainMenu(screen)
     if menu.run():
-        run_game(screen)  # Przekazujemy screen do gry
+        run_game(screen)
 
 if __name__ == "__main__":
     main()
