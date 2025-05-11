@@ -30,7 +30,7 @@ class Player:
 
         # Ograniczenia ekranu
         self.rect.x = max(0, min(self.rect.x, SCREEN_WIDTH - TILE_SIZE))
-        self.rect.y = max(0, min(self.rect.y, SCREEN_HEIGHT - TILE_SIZE))
+        self.rect.y = max(UI_HEIGHT, min(self.rect.y, SCREEN_HEIGHT - TILE_SIZE))
 
     def draw(self, screen):
-        pygame.draw.rect(screen, (0, 120, 200), self.
+        pygame.draw.rect(screen, PLAYER_COLOR, self.rect)

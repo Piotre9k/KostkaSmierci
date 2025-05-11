@@ -30,7 +30,7 @@ def run_game(screen):
         # Kolizja z celem
         if player.rect.colliderect(target.rect):
             target = Target(game_map.walls)
-            ui.add_score(1)
+            ui.update_score(1)
         
         # Renderowanie
         screen.fill((30, 30, 40))
