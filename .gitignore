@@ -1,0 +1,25 @@
+# Wykluczenia dla Pythona
+__pycache__/
+*.py[cod]
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Wykluczenia dla PyInstaller
+*.spec
+*.log
+
+# Wykluczenia systemowe
+.DS_Store
+Thumbs.db
+
+# Wykluczenia IDE
+.vscode/
+.idea/
+
+# Wykluczenia środowisk wirtualnych
+venv/
+e
