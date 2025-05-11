@@ -7,7 +7,7 @@ from game.ui import UI
 from settings import *
 
 def run_game(screen):
-    """Główna pętla gry (dostosowana do Twojej implementacji)"""
+    """Główna pętla gry"""
     game_map = Map()
     player = Player()
     target = Target(game_map.walls)
@@ -21,14 +21,18 @@ def run_game(screen):
                 pygame.quit()
                 return
             
-            player.handle_event(event)
+            # Obsługa zdarzeń
+            if event.type == pygame.KEYDOWN:
+                player.handle_event(event)
         
-        player.update_position()  # Zmiana nazwy metody!
+        player.update_position()
         
+        # Kolizja z celem
         if player.rect.colliderect(target.rect):
             target = Target(game_map.walls)
             ui.add_score(1)
         
+        # Renderowanie
         screen.fill((30, 30, 40))
         game_map.draw(screen)
         target.draw(screen)
