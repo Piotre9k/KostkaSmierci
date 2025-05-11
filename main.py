@@ -1,38 +1,40 @@
 import pygame
-import tkinter as tk
-from tkinter import messagebox
-import sys
-from settings import *
+from game.menu import MainMenu
 from game.player import Player
+from game.map import GameMap
 from game.target import Target
 from game.ui import UI
-from game.map import Map
+from settings import *
 
 def run_game():
-    pygame.init()
+    """Główna pętla gry (oryginalna logika)"""
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption("BlokŚmierci")
+    pygame.display.set_caption("Kostka Śmierci")
+    
+    game_map = GameMap()
+    player = Player(game_map)
+    target = Target(game_map.walls)
+    ui = UI()
+    
     clock = pygame.time.Clock()
     
-    game_map = Map()
-    player = Player()
-    target = Target(game_map.walls)  # Przekazanie ścian
-    ui = UI()
-
-    running = True
-    while running:
+    while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
+                pygame.quit()
+                return
+            
+            player.handle_event(event)
         
-        keys = pygame.key.get_pressed()
-        player.move(keys, game_map.walls)
+        player.update()
         
+        # Kolizja z celem
         if player.rect.colliderect(target.rect):
-            ui.update_score(1)
-            target = Target(game_map.walls)  # Ponowne przekazanie ścian
+            target = Target(game_map.walls)
+            ui.add_score(1)
         
-        screen.fill(BG_COLOR)
+        # Renderowanie
+        screen.fill((30, 30, 40))
         game_map.draw(screen)
         target.draw(screen)
         player.draw(screen)
@@ -40,18 +42,15 @@ def run_game():
         
         pygame.display.flip()
         clock.tick(FPS)
+
+def main():
+    pygame.init()
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     
-    pygame.quit()
+    # Ekran startowy
+    menu = MainMenu(screen)
+    if menu.run():
+        run_game()
 
-root = tk.Tk()
-root.withdraw()
-response = messagebox.askyesno(
-    "BlokŚmierci",
-    "Czy chcesz rozpocząć grę?",
-    icon='question'
-)
-
-if response:
-    run_game()
-else:
-    sys.exit()
+if __name__ == "__main__":
+    main()
