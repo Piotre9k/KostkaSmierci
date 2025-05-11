@@ -1,18 +1,15 @@
 import pygame
 from game.menu import MainMenu
 from game.player import Player
-from game.map import Map  # Poprawiony import!
+from game.map import Map
 from game.target import Target
 from game.ui import UI
 from settings import *
 
-def run_game():
-    """Główna pętla gry"""
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption("Kostka Śmierci")
-    
-    game_map = Map()  # Teraz używamy klasy Map
-    player = Player(game_map)
+def run_game(screen):  # Dodajemy screen jako argument
+    """Główna pętla gry (zgodna z Twoją implementacją)"""
+    game_map = Map()
+    player = Player()  # Teraz bez przekazywania game_map
     target = Target(game_map.walls)
     ui = UI()
     
@@ -44,10 +41,11 @@ def run_game():
 def main():
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption("Kostka Śmierci")
     
     menu = MainMenu(screen)
     if menu.run():
-        run_game()
+        run_game(screen)  # Przekazujemy screen do gry
 
 if __name__ == "__main__":
     main()

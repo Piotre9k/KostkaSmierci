@@ -1,1 +1,1 @@
-gogogo nie kradnij bo wpierdol 
+ciekawa gra ale w pracach beta nie kradnij pomyslow
