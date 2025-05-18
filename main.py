@@ -1,10 +1,11 @@
 import pygame
 import random
-from game.menu import MainMenu
-from game.player import Player
-from game.map import Map
-from game.target import Target, Coin
-from game.ui import UI
+from menu import MainMenu
+from player import Player
+from map import Map
+from target import Target, Coin
+from ui import UI
+from owner import OwnerConsole
 from settings import *
 
 def run_game(screen):
@@ -18,6 +19,15 @@ def run_game(screen):
     score = 0
     level = 1
     
+    # Konsola developerska
+    game_state = {
+        'score': score,
+        'coins': ui.coins,
+        'level': level,
+        'player_pos': (player.rect.x, player.rect.y)
+    }
+    owner_console = OwnerConsole(game_state)
+    
     running = True
     while running:
         for event in pygame.event.get():
@@ -26,15 +36,29 @@ def run_game(screen):
             
             player.handle_event(event)
             
-            selected_color = ui.handle_event(event)
-            if selected_color:
-                player.set_color(ui.get_current_color())
+            # Obsługa konsoli developerskiej
+            if event.type == pygame.KEYDOWN:
+                if (event.key == CONSOLE_HOTKEY[0] and 
+                    pygame.key.get_mods() & CONSOLE_HOTKEY[1]):
+                    owner_console.toggle()
+            
+            if owner_console.active:
+                owner_console.handle_event(event)
+            else:
+                selected_color = ui.handle_event(event)
+                if selected_color:
+                    player.set_color(ui.get_current_color())
         
         player.update_position()
         
+        # Aktualizacja stanu gry dla konsoli
+        game_state['score'] = ui.score
+        game_state['coins'] = ui.coins
+        game_state['level'] = level
+        game_state['player_pos'] = (player.rect.x, player.rect.y)
+        
         # Sprawdzanie kolizji z targetem
         if player.rect.colliderect(target.rect):
-            score += 1
             ui.update_score(1)
             target = Target(game_map.walls, game_map.holes)
             target.change_color()
@@ -47,7 +71,7 @@ def run_game(screen):
                 y = random.randint(UI_HEIGHT + 2*TILE_SIZE, SCREEN_HEIGHT - 2*TILE_SIZE - COIN_SIZE)
                 coins.append(Coin(x, y))
             
-            if score % 10 == 0:
+            if ui.score % 10 == 0:
                 level += 1
                 game_map = Map("SPECJALNA" if level % 3 == 0 else None)
                 player = Player(game_map.walls, game_map.holes)
@@ -59,7 +83,7 @@ def run_game(screen):
                 coin.collected = True
                 ui.add_coins(1)
         
-        # Aktualizacja monet (usuwanie zebranych i tych z wygasłym czasem)
+        # Aktualizacja monet
         coins = [coin for coin in coins if coin.update()]
         
         game_map.update_transition()
@@ -69,10 +93,8 @@ def run_game(screen):
         game_map.draw(screen)
         target.draw(screen)
         
-        # Rysowanie monet z timerem
         for coin in coins:
             coin.draw(screen)
-            # Rysowanie paska czasu (tylko dla aktywnych monet)
             if not coin.collected:
                 timer_width = COIN_SIZE * (coin.lifetime / COIN_DURATION)
                 pygame.draw.rect(screen, (200, 200, 200), (coin.x, coin.y - 5, COIN_SIZE, 3))
@@ -85,6 +107,9 @@ def run_game(screen):
         font = pygame.font.SysFont("Arial", 24)
         level_text = font.render(f"Poziom: {level}", True, (255, 255, 255))
         screen.blit(level_text, (SCREEN_WIDTH//2 - 50, 10))
+        
+        # Rysowanie konsoli (jeśli aktywna)
+        owner_console.draw(screen)
         
         pygame.display.flip()
         clock.tick(FPS)

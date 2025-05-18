@@ -21,15 +21,6 @@ PLAYER_COLORS = {
     "Tęcza": "rainbow"
 }
 DEFAULT_COLOR = "Czerwony"
-COLOR_PRICES = {
-    "Czerwony": 10,
-    "Niebieski": 10,
-    "Zielony": 10,
-    "Żółty": 15,
-    "Fioletowy": 15,
-    "Różowy": 15,
-    "Tęcza": 30
-}
 
 # Typy map
 MAP_TYPES = ["LABIRYNT", "KRZYŻ", "POKOJ", "TUNEL", "SPECJALNA"]
@@ -38,3 +29,8 @@ MAP_TYPES = ["LABIRYNT", "KRZYŻ", "POKOJ", "TUNEL", "SPECJALNA"]
 COIN_COLOR = (255, 215, 0)
 COIN_SIZE = 15
 COIN_DURATION = 600  # czas w klatkach (5 sekund przy 60 FPS)
+
+# Konsola developerska
+CONSOLE_BG_COLOR = (30, 30, 50)
+CONSOLE_TEXT_COLOR = (200, 200, 200)
+CONSOLE_HOTKEY = (pygame.K_j, pygame.KMOD_SHIFT)  # SHIFT + J
