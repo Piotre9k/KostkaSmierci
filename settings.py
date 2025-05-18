@@ -21,6 +21,20 @@ PLAYER_COLORS = {
     "Tęcza": "rainbow"
 }
 DEFAULT_COLOR = "Czerwony"
+COLOR_PRICES = {
+    "Czerwony": 10,
+    "Niebieski": 10,
+    "Zielony": 10,
+    "Żółty": 15,
+    "Fioletowy": 15,
+    "Różowy": 15,
+    "Tęcza": 30
+}
 
 # Typy map
 MAP_TYPES = ["LABIRYNT", "KRZYŻ", "POKOJ", "TUNEL", "SPECJALNA"]
+
+# Monety
+COIN_COLOR = (255, 215, 0)
+COIN_SIZE = 15
+COIN_DURATION = 600  # czas w klatkach (5 sekund przy 60 FPS)
