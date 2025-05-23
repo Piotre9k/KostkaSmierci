@@ -1,5 +1,5 @@
 import pygame
-from settings import *
+from .settings import *
 
 class OwnerConsole:
     def __init__(self, game_state):

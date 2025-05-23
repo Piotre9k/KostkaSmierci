@@ -1,5 +1,5 @@
 import pygame
-from settings import *
+from .settings import *
 
 class Player:
     def __init__(self, walls, holes=None):

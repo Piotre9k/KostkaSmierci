@@ -1,6 +1,6 @@
 import pygame
 import random
-from settings import *
+from .settings import *
 
 class Target:
     def __init__(self, walls, holes=None):
