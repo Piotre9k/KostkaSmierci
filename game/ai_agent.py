@@ -1,19 +1,20 @@
 import pygame
 import random
+import math
 from .settings import *
 
 class AIAgent:
-    def __init__(self, walls, holes=None):
+    def __init__(self, walls, holes, start_pos):
         self.rect = pygame.Rect(
-            random.randint(2*TILE_SIZE, SCREEN_WIDTH - 2*TILE_SIZE),
-            random.randint(UI_HEIGHT + 2*TILE_SIZE, SCREEN_HEIGHT - 2*TILE_SIZE),
+            start_pos[0], 
+            start_pos[1],
             TILE_SIZE // 2, 
             TILE_SIZE // 2
         )
-        self.color = (random.randint(50, 255), random.randint(50, 255), random.randint(50, 255))
+        self.color = random.randint(50, 255), random.randint(50, 255), random.randint(50, 255)
         self.walls = walls
-        self.holes = holes if holes else []
-        self.speed = TILE_SIZE // 10
+        self.holes = holes
+        self.speed = TILE_SIZE // 8
         self.lifetime = 5 * FPS
         self.alive = True
         self.fitness = 0
@@ -41,9 +42,7 @@ class AIAgent:
         
         direction = outputs.index(max(outputs))
         
-        target_dir_x = target_rect.x - self.rect.x
-        target_dir_y = target_rect.y - self.rect.y
-        target_dist = (target_dir_x**2 + target_dir_y**2)**0.5
+        target_dist = math.sqrt((target_rect.x - self.rect.x)**2 + (target_rect.y - self.rect.y)**2)
         if target_dist > 0:
             self.fitness += (1 / target_dist) * 0.1
         
@@ -85,7 +84,7 @@ class AIAgent:
             self.rect = old_pos
             self.fitness -= 0.1
             
-        if self.holes and any(self.rect.colliderect(hole) for hole in self.holes):
+        if any(self.rect.colliderect(hole) for hole in self.holes):
             self.rect.x = SCREEN_WIDTH - self.rect.x
             self.rect.y = SCREEN_HEIGHT - self.rect.y
             
@@ -102,22 +101,11 @@ class AITrainer:
         self.agents = []
         self.generation = 0
         self.best_score = 0
-        self.running = False
-        self.auto_mode = False
-        self.total_time = 0
-        self.total_rounds = 0
         
-    def start_training(self, num_agents, walls, holes):
-        self.agents = [AIAgent(walls, holes) for _ in range(num_agents)]
-        self.running = True
-        self.generation += 1
+    def start_training(self, num_agents, walls, holes, start_pos):
+        self.agents = [AIAgent(walls, holes, start_pos) for _ in range(num_agents)]
         
     def update(self, target_rect):
-        if not self.running:
-            return
-            
-        self.total_time += 1 / FPS
-        
         alive_count = 0
         for agent in self.agents:
             if agent.update(target_rect):
@@ -125,7 +113,6 @@ class AITrainer:
                 
         if alive_count == 0:
             self.next_generation()
-            self.total_rounds += 1
             
     def next_generation(self):
         if not self.agents:
@@ -136,29 +123,27 @@ class AITrainer:
         self.best_score = max(self.best_score, best_agents[0].fitness)
         
         new_agents = []
-        for _ in range(len(self.agents)):
+        for agent in self.agents:
             parent1, parent2 = random.choices(best_agents, k=2)
-            child = AIAgent(self.agents[0].walls, self.agents[0].holes)
+            new_agent = AIAgent(self.agents[0].walls, self.agents[0].holes, 
+                              (self.agents[0].rect.x, self.agents[0].rect.y))
             
             for i in range(4):
                 for j in range(4):
                     if random.random() < 0.5:
-                        child.brain['weights'][i][j] = parent1.brain['weights'][i][j]
+                        new_agent.brain['weights'][i][j] = parent1.brain['weights'][i][j]
                     else:
-                        child.brain['weights'][i][j] = parent2.brain['weights'][i][j]
+                        new_agent.brain['weights'][i][j] = parent2.brain['weights'][i][j]
                     
                     if random.random() < 0.1:
-                        child.brain['weights'][i][j] += random.uniform(-0.5, 0.5)
+                        new_agent.brain['weights'][i][j] += random.uniform(-0.5, 0.5)
                         
-            new_agents.append(child)
+            new_agents.append(new_agent)
             
         self.agents = new_agents
         self.generation += 1
         
     def draw(self, screen):
-        if not self.running:
-            return
-            
         for agent in self.agents:
             agent.draw(screen)
             
@@ -166,9 +151,7 @@ class AITrainer:
         stats = [
             f"Pokolenie: {self.generation}",
             f"Agenty: {len([a for a in self.agents if a.alive])}/{len(self.agents)}",
-            f"Najlepszy wynik: {self.best_score:.2f}",
-            f"Czas: {self.total_time:.1f}s",
-            f"Rundy: {self.total_rounds}"
+            f"Najlepszy wynik: {self.best_score:.2f}"
         ]
         
         for i, stat in enumerate(stats):

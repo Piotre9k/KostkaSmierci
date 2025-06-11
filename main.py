@@ -1,41 +1,58 @@
 import pygame
 import sys
-import os
 import random
-from game.menu import MainMenu
-from game.settings import *
-from game.player import Player
-from game.map import Map
-from game.target import Target, Coin
-from game.ui import UI
-from game.owner import OwnerConsole
-from game.ai_agent import AIAgent, AITrainer
+
+try:
+    from game.menu import MainMenu
+    from game.settings import *
+    from game.player import Player
+    from game.map import Map
+    from game.target import Target, Coin
+    from game.ui import UI
+    from game.ai_agent import AIAgent, AITrainer
+    from game.owner import OwnerConsole
+    from game.maze_presets import ALL_MAZES
+except ImportError:
+    from menu import MainMenu
+    from settings import *
+    from player import Player
+    from map import Map
+    from target import Target, Coin
+    from ui import UI
+    from ai_agent import AIAgent, AITrainer
+    from owner import OwnerConsole
+    from maze_presets import ALL_MAZES
+
 
 def run_game(screen, training_mode=False):
-    maze_type = "TRAIN_1" if training_mode else DEFAULT_MAZE_TYPE
-    maze_size = "SMALL"
+    map_keys = list(ALL_MAZES.keys())
+    current_map_name = random.choice(map_keys)
+    game_map = Map(current_map_name)
     
-    game_map = Map(maze_type, maze_size)
     player = Player(game_map.walls, game_map.holes) if not training_mode else None
     target = Target(game_map.walls, game_map.holes)
     ui = UI()
+    if player:
+        player.set_color(ui.get_current_color())
+        
     coins = []
     clock = pygame.time.Clock()
-    level = 1
+    
+    start_pos = (TILE_SIZE, UI_HEIGHT + TILE_SIZE)
+    if player:
+        player.rect.x, player.rect.y = start_pos
     
     ai_trainer = AITrainer()
     if training_mode:
-        ai_trainer.start_training(ui.ai_agent_count, game_map.walls, game_map.holes)
-    
+        ai_trainer.start_training(AI_AGENT_COUNT, game_map.walls, game_map.holes, start_pos)
+
     game_state = {
-        'score': 0,
-        'coins': 0,
-        'level': level,
+        'score': ui.score,
+        'coins': ui.coins,
         'player_pos': (player.rect.x, player.rect.y) if player else (0, 0),
         'set_score': ui.update_score,
         'set_coins': ui.add_coins,
-        'set_level': lambda l: None,
-        'set_player_pos': lambda x, y: None
+        'set_player_pos': lambda x, y: setattr(player.rect, 'x', x) or setattr(player.rect, 'y', y)
     }
     owner_console = OwnerConsole(game_state)
 
@@ -45,9 +62,14 @@ def run_game(screen, training_mode=False):
             if event.type == pygame.QUIT:
                 running = False
             
-            if player:
-                player.handle_event(event)
-            
+            if not owner_console.active:
+                if player:
+                    player.handle_event(event)
+                
+                selected_color = ui.handle_event(event)
+                if selected_color and player:
+                    player.set_color(selected_color)
+
             if event.type == pygame.KEYDOWN:
                 if (event.key == CONSOLE_HOTKEY[0] and 
                     pygame.key.get_mods() & CONSOLE_HOTKEY[1]):
@@ -55,53 +77,38 @@ def run_game(screen, training_mode=False):
             
             if owner_console.active:
                 owner_console.handle_event(event)
-            else:
-                selected_color = ui.handle_event(event)
-                if selected_color and player:
-                    player.set_color(ui.get_current_color())
         
         if player:
             player.update_position()
-        
-        game_state['score'] = ui.score
-        game_state['coins'] = ui.coins
-        game_state['level'] = level
-        if player:
             game_state['player_pos'] = (player.rect.x, player.rect.y)
-        
-        if training_mode:
-            ai_trainer.update(target.rect)
-        
-        if player and player.rect.colliderect(target.rect):
-            ui.update_score(1)
-            target = Target(game_map.walls, game_map.holes)
-            target.change_color()
             
-            coins.clear()
-            num_coins = random.randint(1, 3)
-            for _ in range(num_coins):
-                x = random.randint(2*game_map.tile_size, SCREEN_WIDTH - 2*game_map.tile_size - COIN_SIZE)
-                y = random.randint(UI_HEIGHT + 2*game_map.tile_size, SCREEN_HEIGHT - 2*game_map.tile_size - COIN_SIZE)
-                coins.append(Coin(x, y))
-            
-            if ui.score % 10 == 0:
-                level += 1
-                game_map = Map("SPECJALNA" if level % 3 == 0 else None)
-                player = Player(game_map.walls, game_map.holes)
+            if player.rect.colliderect(target.rect):
+                ui.update_score(1)
+                
+                if ui.score > 0 and ui.score % 5 == 0:
+                    current_map_name = random.choice(map_keys)
+                    game_map = Map(current_map_name)
+                    player.walls = game_map.walls
+                    player.holes = game_map.holes
+                    player.rect.x, player.rect.y = start_pos
+                
                 target = Target(game_map.walls, game_map.holes)
-                if training_mode:
-                    ai_trainer.start_training(ui.ai_agent_count, game_map.walls, game_map.holes)
-                game_map.start_transition()
-        
-        if player:
+                
+                coins.clear()
+                for _ in range(random.randint(1, 3)):
+                    x = random.randint(2*TILE_SIZE, SCREEN_WIDTH - 2*TILE_SIZE)
+                    y = random.randint(UI_HEIGHT + 2*TILE_SIZE, SCREEN_HEIGHT - 2*TILE_SIZE)
+                    coins.append(Coin(x, y))
+            
             for coin in coins[:]:
                 if not coin.collected and player.rect.colliderect(coin.rect):
                     coin.collected = True
                     ui.add_coins(1)
         
-        coins = [coin for coin in coins if coin.update()]
+        if training_mode:
+            ai_trainer.update(target.rect)
         
-        game_map.update_transition()
+        coins = [coin for coin in coins if coin.update()]
         
         screen.fill(BG_COLOR)
         game_map.draw(screen)
@@ -109,10 +116,6 @@ def run_game(screen, training_mode=False):
         
         for coin in coins:
             coin.draw(screen)
-            if not coin.collected:
-                timer_width = COIN_SIZE * (coin.lifetime / COIN_DURATION)
-                pygame.draw.rect(screen, (200, 200, 200), (coin.x, coin.y - 5, COIN_SIZE, 3))
-                pygame.draw.rect(screen, (0, 255, 0), (coin.x, coin.y - 5, timer_width, 3))
         
         if player:
             player.draw(screen)
@@ -121,11 +124,6 @@ def run_game(screen, training_mode=False):
             ai_trainer.draw(screen)
         
         ui.draw(screen)
-        
-        font = pygame.font.SysFont("Arial", 24)
-        level_text = font.render(f"Poziom: {level}", True, (255, 255, 255))
-        screen.blit(level_text, (SCREEN_WIDTH//2 - 50, 10))
-        
         owner_console.draw(screen)
         pygame.display.flip()
         clock.tick(FPS)

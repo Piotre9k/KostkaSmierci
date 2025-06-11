@@ -78,8 +78,4 @@ class Player:
         pygame.draw.rect(screen, self.color, self.rect)
 
     def set_color(self, color):
-        if color in PLAYER_COLORS.values():
-            self.color = color
-        elif color == "rainbow":
-            colors = [(255,0,0), (255,127,0), (255,255,0), (0,255,0), (0,0,255), (75,0,130), (148,0,211)]
-            self.color = colors[pygame.time.get_ticks() // 200 % len(colors)]
+        self.color = color
